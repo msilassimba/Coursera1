@@ -1,0 +1,81 @@
+import speech_recognition as sr
+import pyttsx3
+import datetime
+import webbrowser
+import wikipedia
+import pywhatkit
+
+# Initialize the voice engine
+engine = pyttsx3.init()
+voices = engine.getProperty('voices')
+engine.setProperty('voice', voices[0].id)  # You can change the voice index
+
+def talk(text):
+    engine.say(text)
+    engine.runAndWait()
+
+def greet_user():
+    hour = datetime.datetime.now().hour
+    if hour < 12:
+        talk("Good morning!")
+    elif hour < 18:
+        talk("Good afternoon!")
+    else:
+        talk("Good evening!")
+    talk("I am your assistant. How can I help you?")
+
+def take_command():
+    listener = sr.Recognizer()
+    with sr.Microphone() as source:
+        print("Listening...")
+        listener.adjust_for_ambient_noise(source)
+        audio = listener.listen(source)
+
+    try:
+        command = listener.recognize_google(audio)
+        command = command.lower()
+        print(f"You said: {command}")
+    except:
+        print("Sorry, I didn't catch that.")
+        return ""
+    return command
+
+def run_assistant():
+    greet_user()
+    while True:
+        command = take_command()
+
+        if "play" in command:
+            song = command.replace("play", "")
+            talk(f"Playing {song}")
+            pywhatkit.playonyt(song)
+
+        elif "time" in command:
+            time = datetime.datetime.now().strftime('%I:%M %p')
+            talk(f"The time is {time}")
+
+        elif "who is" in command or "what is" in command:
+            try:
+                person = command.replace("who is", "").replace("what is", "")
+                info = wikipedia.summary(person, 2)
+                talk(info)
+            except:
+                talk("Sorry, I couldn't find information on that.")
+
+        elif "open youtube" in command:
+            webbrowser.open("https://youtube.com")
+            talk("Opening YouTube")
+
+        elif "open google" in command:
+            webbrowser.open("https://google.com")
+            talk("Opening Google")
+
+        elif "stop" in command or "exit" in command:
+            talk("Goodbye!")
+            break
+
+        elif command:
+            talk("Sorry, I don't understand that yet.")
+
+# Start the assistant
+run_assistant()
